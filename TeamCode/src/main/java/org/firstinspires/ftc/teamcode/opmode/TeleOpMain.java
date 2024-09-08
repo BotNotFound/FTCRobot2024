@@ -6,13 +6,13 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.hardware.Camera;
 import org.firstinspires.ftc.teamcode.hardware.ConditionalHardwareDevice;
-import org.firstinspires.ftc.teamcode.modules.*;
+import org.firstinspires.ftc.teamcode.modules.DriveTrain;
 
 @TeleOp
 public class TeleOpMain extends OpMode {
@@ -23,6 +23,8 @@ public class TeleOpMain extends OpMode {
     private PIDFController slidePID;
 
     private ConditionalHardwareDevice<Servo> slideServo;
+
+    private Camera camera;
 
     @Config
     public static class SlideConfig {
@@ -50,6 +52,11 @@ public class TeleOpMain extends OpMode {
         slidePID = new PIDFController(SlideConfig.P_COEF, SlideConfig.I_COEF, SlideConfig.D_COEF, SlideConfig.F_COEF);
 
         slideServo = ConditionalHardwareDevice.tryGetHardwareDevice(hardwareMap, Servo.class, "Slide Servo");
+
+        camera = new Camera(hardwareMap);
+        camera.switchToFirstPipeline();
+        telemetry.addLine("Status: Camera Initialized");
+        telemetry.update();
     }
 
     @Override
@@ -76,6 +83,9 @@ public class TeleOpMain extends OpMode {
         });
 
         telemetry.addData("Gamepad1 Right Trigger: ", gamepad1.right_trigger);
+
+        telemetry.addLine(camera.getPipeline1Output());
+        telemetry.update();
     }
 
 }
