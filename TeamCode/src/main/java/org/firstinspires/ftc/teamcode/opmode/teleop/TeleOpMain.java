@@ -13,11 +13,7 @@ public class TeleOpMain extends OpMode {
 
     private FieldCentricDriveTrain driveTrain;
 
-    private LinearSlide slide;
-
-    private Arm arm;
-
-    private Intake intake;
+    private SampleControlSystem sampleControlSystem;
 
     @Override
     public void init() {
@@ -25,26 +21,19 @@ public class TeleOpMain extends OpMode {
 
         driveTrain = new FieldCentricDriveTrain(this);
 
-        slide = new LinearSlide(this);
-
-        arm = new Arm(this);
-
-        intake = new Intake(this);
+        sampleControlSystem = new SampleControlSystem(this);
     }
 
     @Override
     public void init_loop() {
         driveTrain.log();
-        slide.log();
-        arm.log();
-        intake.log();
+        sampleControlSystem.log();
     }
 
     @Override
     public void start() {
-        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
-        intake.holdWristRotation();
+        sampleControlSystem.startSystem();
+        sampleControlSystem.setToMovingMode();
 
         driveTrain.resetRotation();
     }
@@ -61,39 +50,37 @@ public class TeleOpMain extends OpMode {
 
         driveTrain.setVelocity(gamepad1.left_stick_x * 0.5, -gamepad1.left_stick_y * 0.5, -gamepad1.right_stick_x * 0.5);
 
-        slide.updateMotorPower();
-        arm.updateMotorPowers();
-        arm.monitorPositionSwitch();
+        sampleControlSystem.updateMotorPowers();
+        sampleControlSystem.monitorArmPositionSwitch();
 
 //        if (gamepad2.y) {
 //            intake.turn();
 //        }
-        intake.holdWristRotation();
+        //intake.holdWristRotation();
         if (gamepad1.left_bumper) {
-            intake.grab();
+            sampleControlSystem.intakeGrab();
         } else if (gamepad1.right_bumper) {
-            intake.eject();
+            sampleControlSystem.intakeEject();
         } else {
-            intake.settle();
+            sampleControlSystem.intakeSettle();
         }
 
         if (gamepad2.a) {
-            slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-            arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
+            sampleControlSystem.setToMovingMode();
         }
         else if (gamepad2.x) {
-            slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_SCORING);
-            arm.setTargetRotation(Arm.ARM_ROTATION_SCORING);
+            sampleControlSystem.setToScoringMode();
         }
         else if (gamepad2.b) {
-            slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_INTAKE);
-            arm.setTargetRotation(Arm.ARM_ROTATION_INTAKE);
+            sampleControlSystem.setToIntakeMode();
+        }
+
+        if (sampleControlSystem.isInIntakeMode()) {
+            sampleControlSystem.setTargetDistance(-(gamepad2.left_stick_y + 1) * 0.5);
         }
 
         driveTrain.log();
-        slide.log();
-        arm.log();
-        intake.log();
+        sampleControlSystem.log();
         telemetry.addData("Gamepad1 Right Trigger: ", gamepad1.right_trigger);
     }
 

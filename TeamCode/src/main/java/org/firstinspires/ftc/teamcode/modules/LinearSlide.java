@@ -25,6 +25,12 @@ public class LinearSlide extends Module {
     private static final double SLIDE_ENCODER_RESOLUTION = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
     private static final int SLIDE_MAX_EXTENSION_TICKS = 2400; // TODO new is 2500
 
+    /**
+     * The max distance the linear slide can extend
+     */
+    public static final double MAX_EXTENSION_DISTANCE =
+            (SLIDE_MAX_EXTENSION_TICKS / SLIDE_ENCODER_RESOLUTION) * 112;
+
     @Config
     public static class SlideConfig {
         public static double P_COEF = 0.0033;

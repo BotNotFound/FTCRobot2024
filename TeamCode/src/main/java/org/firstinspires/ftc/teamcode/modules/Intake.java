@@ -25,6 +25,10 @@ public class Intake extends Module {
 
     private final double SERVO_SPEED = 0.5;
 
+    public static double WRIST_ROTATION_INTAKE = 154.5;
+    public static double WRIST_ROTATION_MOVING = 145;
+    public static double WRIST_ROTATION_SCORING = 75;
+
     /**
      * Initializes the module and registers it with the specified OpMode.  This is where references to any hardware
      * devices used by the module are loaded.
@@ -80,6 +84,12 @@ public class Intake extends Module {
             } else if (w.getPosition() == 0.5) {
                 w.setPosition(0.0);
             }
+        });
+    }
+
+    public void rotateWristToDegrees(double rotation) {
+        wristServo.runIfAvailable(w -> {
+            w.setPosition(rotation / 180);
         });
     }
 
