@@ -13,12 +13,15 @@ import org.firstinspires.ftc.teamcode.modules.*;
 @TeleOp
 public class TeleOpMain extends OpMode {
 
+    public static boolean resetSlidePosition = true;
+
     /**
      * The time at start where the arm is moving upward at constant speed.
      * Needs to be nonzero to ensure that the wrist isn't pushing against the ground
      * when it rotates.
      */
     public static int INITIAL_JUMP_TIME_MILLIS = 40;
+    public static double SLOWER_TURN_SPEED_MULTIPLIER = 0.25;
 
     private FieldCentricDriveTrain driveTrain;
 
@@ -30,7 +33,7 @@ public class TeleOpMain extends OpMode {
 
         driveTrain = new FieldCentricDriveTrain(this);
 
-        sampleControlSystem = new SampleControlSystem(this);
+        sampleControlSystem = new SampleControlSystem(this, resetSlidePosition);
     }
 
     @Override
@@ -43,9 +46,6 @@ public class TeleOpMain extends OpMode {
     public void start() {
         sampleControlSystem.startSystem();
         sampleControlSystem.setToMovingMode();
-//        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-//        arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
-//        intake.moveWristTo(Intake.WRIST_POSITION_DEACTIVATED);
 
         driveTrain.resetRotation();
     }
@@ -60,12 +60,17 @@ public class TeleOpMain extends OpMode {
             driveTrain.resetRotation();
         }
 
-        driveTrain.setVelocity(gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        final double strafe = gamepad1.left_stick_x;
+        final double forward = -gamepad1.left_stick_y;
+        final double rotate = -gamepad1.right_stick_x;
+        if (gamepad1.left_bumper || gamepad1.right_bumper) {
+            driveTrain.setVelocity(strafe, forward, rotate * SLOWER_TURN_SPEED_MULTIPLIER);
+        }
+        else {
+            driveTrain.setVelocity(strafe, forward, rotate);
+        }
 
-//        if (gamepad2.y) {
-//            intake.turn();
-//        }
-        //intake.holdWristRotation();
+        sampleControlSystem.holdWristRotation();
         if (gamepad2.left_bumper) {
             sampleControlSystem.intakeGrab();
         } else if (gamepad2.right_bumper) {
@@ -84,26 +89,23 @@ public class TeleOpMain extends OpMode {
         else if (gamepad2.b) {
             sampleControlSystem.setToIntakeMode();
         }
-
-        if (sampleControlSystem.isInIntakeMode()) {
-            sampleControlSystem.setTargetDistance((-gamepad2.left_stick_y + 1) * 0.5);
-        }
         else if (gamepad2.dpad_up) {
-            sampleControlSystem.setUpHang();
-        }
-        else if (gamepad2.dpad_left) {
-            sampleControlSystem.grabHang();
-        }
-        else if (gamepad2.dpad_down) {
-            sampleControlSystem.pullHang();
+            sampleControlSystem.setUpLV1Hang();
         }
         else {
             activateArm = false;
         }
 
+        if (sampleControlSystem.isInIntakeMode()) {
+            sampleControlSystem.setTargetDistance((-gamepad2.left_stick_y + 1) * 0.5);
+        }
+
         sampleControlSystem.updateMotorPowers();
         if (gamepad2.y) {
             sampleControlSystem.deactivateArm();
+        }
+        else if (gamepad2.dpad_down) {
+            sampleControlSystem.dropArmUnsafe();
         }
         else if (activateArm || sampleControlSystem.monitorArmPositionSwitch()) {
             sampleControlSystem.activateArm();
@@ -112,5 +114,11 @@ public class TeleOpMain extends OpMode {
         driveTrain.log();
         sampleControlSystem.log();
         telemetry.addData("Gamepad1 Right Trigger: ", gamepad1.right_trigger);
+    }
+
+
+    @Override
+    public void stop() {
+        resetSlidePosition = true;
     }
 }

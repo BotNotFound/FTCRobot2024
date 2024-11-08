@@ -66,8 +66,12 @@ public class SampleControlSystem extends Module {
      * @see ModuleManager#getModule(Class)
      */
     public SampleControlSystem(OpMode registrar) {
+        this(registrar, true);
+    }
+
+    public SampleControlSystem(OpMode registrar, boolean resetSlidePosition) {
         super(registrar);
-        slide = new LinearSlide(registrar);
+        slide = new LinearSlide(registrar, resetSlidePosition);
         arm = new Arm(registrar);
         intake = new Intake(registrar);
     }
@@ -160,6 +164,10 @@ public class SampleControlSystem extends Module {
         intake.rotateWristToDegrees(150);
     }
 
+    public void holdWristRotation() {
+        intake.holdWristRotation();
+    }
+
     public void intakeGrab() {
         intake.grab();
     }
@@ -172,22 +180,10 @@ public class SampleControlSystem extends Module {
         intake.settle();
     }
 
-    public void setUpHang() {
-        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_SETUP);
-        intake.moveWristTo(Intake.WRIST_POSITION_MOVING);
-    }
-
-    public void grabHang() {
-        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_GRAB);
-        intake.moveWristTo(Intake.WRIST_POSITION_MOVING);
-    }
-
-    public void pullHang() {
-        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_PULL);
-        intake.moveWristTo(Intake.WRIST_POSITION_MOVING);
+    public void setUpLV1Hang() {
+        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_HANG_LVL1);
+        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_LVL1_SETUP);
+        intake.moveWristTo(Intake.WRIST_POSITION_DEACTIVATED);
     }
 
     public boolean monitorArmPositionSwitch() {
@@ -201,22 +197,21 @@ public class SampleControlSystem extends Module {
         arm.activate();
         intake.setWristActive(true);
     }
-    public void deactivateArm() {
+    public void dropArmUnsafe() {
         if (!arm.isActive()) {
             return;
         }
-        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        arm.setTargetRotation(Arm.ARM_ROTATION_INTAKE);
-        intake.moveWristTo(Intake.WRIST_POSITION_DEACTIVATED);
         arm.deactivate();
         intake.setWristActive(false);
     }
+    public void deactivateArm() {
+        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
+        arm.setTargetRotation(Arm.ARM_ROTATION_INTAKE);
+        intake.moveWristTo(Intake.WRIST_POSITION_DEACTIVATED);
+        dropArmUnsafe();
+    }
 
     public void startSystem() {
-        //slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        //arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
-        //intake.holdWristRotation();
-
         arm.setTargetRotationAbsolute(20);
         arm.updateMotorPowers();
         try {

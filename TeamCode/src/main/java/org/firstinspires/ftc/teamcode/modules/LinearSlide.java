@@ -47,14 +47,21 @@ public class LinearSlide extends Module {
     public static double SLIDE_HEIGHT_INTAKE = 0.9163;
     public static double SLIDE_HEIGHT_MOVING = 0.0120;
     public static double SLIDE_HEIGHT_SCORING = 1.0000;
+    public static double SLIDE_HEIGHT_HANG_LVL1 = 0.5000;
+    public static double SLIDE_HEIGHT_HANG_LVL2 = 0.0100;
 
     public LinearSlide(OpMode registrar) {
+        this(registrar, true);
+    }
+    public LinearSlide(OpMode registrar, boolean resetPosition) {
         super(registrar);
         motor = ConditionalHardwareDevice.tryGetHardwareDevice(registrar.hardwareMap, PIDFDcMotor.class, SLIDE_MOTOR_NAME);
 
         motor.runIfAvailable(m -> {
             m.setDirection(DcMotorSimple.Direction.REVERSE);
-            m.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            if (resetPosition) {
+                m.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            }
             m.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             m.setPIDF(SlideConfig.P_COEF, SlideConfig.I_COEF, SlideConfig.D_COEF, SlideConfig.F_COEF);
