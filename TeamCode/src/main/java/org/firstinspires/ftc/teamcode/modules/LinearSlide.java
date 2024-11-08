@@ -25,11 +25,15 @@ public class LinearSlide extends Module {
     private static final double SLIDE_ENCODER_RESOLUTION = ((((1+(46.0/17))) * (1+(46.0/11))) * 28);
     private static final int SLIDE_MAX_EXTENSION_TICKS = 2500;
 
+    public static final double SLIDE_BASE_LENGTH = 36;
+
     /**
-     * The max distance the linear slide can extend
+     * The max distance the linear slide can extend in centimeters
+     * Value was measured using measuring tape
+     * The 7 is how far out the wrist extends from the end of the slide
+     * Real length is 93 centimeters
      */
-    public static final double MAX_EXTENSION_DISTANCE =
-            (SLIDE_MAX_EXTENSION_TICKS / SLIDE_ENCODER_RESOLUTION) * 112;
+    public static final double MAX_EXTENSION_DISTANCE = 57 + 7 + SLIDE_BASE_LENGTH;
 
     @Config
     public static class SlideConfig {

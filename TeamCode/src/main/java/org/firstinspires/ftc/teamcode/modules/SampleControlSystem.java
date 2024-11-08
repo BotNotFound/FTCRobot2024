@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode.modules;
 
+import static org.firstinspires.ftc.teamcode.opmode.teleop.TeleOpMain.INITIAL_JUMP_TIME_MILLIS;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.teamcode.modules.core.Module;
+import org.firstinspires.ftc.teamcode.modules.core.ModuleManager;
 
 public class SampleControlSystem extends Module {
 
@@ -10,12 +14,47 @@ public class SampleControlSystem extends Module {
     private final Arm arm;
     private final Intake intake;
 
-    // How tall the Arm's axle is off the ground, in centimeters;
+    /**
+     * How tall the Arm's axle is off the drivetrain of the robot, in centimeters
+     */
     private static final double ARM_BASE_HEIGHT = 31.2;
 
-    private static final double MAX_TARGET_DISTANCE = Math.sqrt(((LinearSlide.MAX_EXTENSION_DISTANCE / 10) * (LinearSlide.MAX_EXTENSION_DISTANCE / 10)) - (ARM_BASE_HEIGHT * ARM_BASE_HEIGHT));
+    /**
+     * The maximum distance in front of the robot the SampleControlSystem can physically go, in centimeters <br>
+     * Calculated using Pythagorean's Theorem
+     */
+    private static final double MAX_TARGET_DISTANCE = Math.sqrt(((LinearSlide.MAX_EXTENSION_DISTANCE) * (LinearSlide.MAX_EXTENSION_DISTANCE)) - (ARM_BASE_HEIGHT * ARM_BASE_HEIGHT));
+
+    /**
+     * The maximum distance in front of the robot the SampleControlSystem can extend
+     *  to remain with FTC's legal extension limit, in centimeters
+     */
+    public static final double LEGAL_DISTANCE_LIMIT = 106;
+
+    /**
+     * The minimum distance in front of the robot the SampleControlSystem should extend,
+     *  so that the linear slide doesn't hit the robot, in centimeters
+     */
+    private static final double MINIMUM_DISTANCE_LIMIT = 28;
+
+    /**
+     * The minimum angle the Arm should rotate,
+     *  so that the linear slide doesn't hit the robot, in centimeters <br>
+     *  Calculated using Alternate Interior Angles Converse Theorem
+     */
+    private static final double MINIMUM_ANGLE_LIMIT = Math.toDegrees(Math.atan(-ARM_BASE_HEIGHT / MINIMUM_DISTANCE_LIMIT));
 
     private boolean inIntakeMode = false;
+
+    /**
+     * The System's current target as a percent of MAX_TARGET_DISTANCE
+     */
+    private double targetDistancePercent = 0.5;
+
+    /**
+     * The System's current target distance in front of the robot, in centimeters
+     */
+    private double targetDistance = targetDistancePercent * MAX_TARGET_DISTANCE;
 
     /**
      * Initializes the module and registers it with the specified OpMode.  This is where references to any hardware
@@ -33,8 +72,20 @@ public class SampleControlSystem extends Module {
         intake = new Intake(registrar);
     }
 
+    @Override
+    public void ensureSafety() {
+        setToMovingMode();
+    }
+
+    @Override
+    public boolean isConnected() {
+        return (slide.isConnected() || arm.isConnected() || intake.isConnected());
+    }
+
     public void setToIntakeMode() {
         inIntakeMode = true;
+        activateArm();
+        intake.setWristActive(false);
         slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
         arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
     }
@@ -45,33 +96,56 @@ public class SampleControlSystem extends Module {
 
     public void setToMovingMode() {
         inIntakeMode = false;
+        activateArm();
         slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
         arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
     }
 
     public void setToScoringMode() {
         inIntakeMode = false;
+        activateArm();
         slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_SCORING);
         arm.setTargetRotation(Arm.ARM_ROTATION_SCORING);
     }
 
+    /**
+     * Sets the current targetDistance of the SampleControlSystem, as well matching the
+     *  linear slide's target distance and the arm's rotation angle
+     * @param distancePercent What percent of MAX_TARGET_DISTANCE the target distance should be
+     */
     public void setTargetDistance(double distancePercent) {
-        double distance = MAX_TARGET_DISTANCE * distancePercent;
-        getTelemetry().addData("Target Distance Percent: ", distancePercent);
-        getTelemetry().addData("Target Distance: ", distance);
-        setSlideTarget(distance);
-        setArmAngle(distance);
-        setWristRotation(distance);
+        // Update class-scope distance percent
+        targetDistancePercent = distancePercent;
+        // Update targetDistance to new target
+        targetDistance = MAX_TARGET_DISTANCE * targetDistancePercent;
+
+        // If the method tries to set targetDistance to an illegal value, put an error in the logs
+        if (targetDistance > LEGAL_DISTANCE_LIMIT) {
+            RobotLog.e("Illegal Distance For Intake: " + targetDistance);
+            return;
+        }
+
+        // Set the linear slide's target distance
+        setSlideTarget(Math.max(targetDistance, MINIMUM_DISTANCE_LIMIT));
+        // Set the arm's angle
+        setArmAngle(Math.max(targetDistance, MINIMUM_DISTANCE_LIMIT));
     }
 
     private void setSlideTarget(double distance) {
         double slideTarget = Math.sqrt((ARM_BASE_HEIGHT * ARM_BASE_HEIGHT) + (distance * distance));
-        slide.setTargetHeight(slideTarget / (LinearSlide.MAX_EXTENSION_DISTANCE / 10));
+        getTelemetry().addData("Slide Target: ", ((slideTarget - LinearSlide.SLIDE_BASE_LENGTH) / LinearSlide.MAX_EXTENSION_DISTANCE));
+        slide.setTargetHeight((slideTarget - LinearSlide.SLIDE_BASE_LENGTH) / LinearSlide.MAX_EXTENSION_DISTANCE);
     }
 
     private void setArmAngle(double distance) {
-        double armAngle = Math.toDegrees(Math.atan(distance / ARM_BASE_HEIGHT));
-        arm.setTargetRotation(armAngle - 90);
+        double armAngle = Math.toDegrees(Math.atan(-ARM_BASE_HEIGHT / distance));
+        getTelemetry().addData("Arm Target: ", armAngle);
+        if (armAngle >= MINIMUM_ANGLE_LIMIT && armAngle <= 0) {
+            arm.setTargetRotation(armAngle);
+        }
+        else {
+            throw new IllegalArgumentException("Illegal Arm Angle: " + armAngle);
+        }
     }
 
     private void setWristRotation(double distance) {
@@ -98,14 +172,57 @@ public class SampleControlSystem extends Module {
         intake.settle();
     }
 
-    public void monitorArmPositionSwitch() {
-        arm.monitorPositionSwitch();
+    public void setUpHang() {
+        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
+        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_SETUP);
+        intake.moveWristTo(Intake.WRIST_POSITION_MOVING);
+    }
+
+    public void grabHang() {
+        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
+        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_GRAB);
+        intake.moveWristTo(Intake.WRIST_POSITION_MOVING);
+    }
+
+    public void pullHang() {
+        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
+        arm.setTargetRotation(Arm.ARM_ROTATION_HANG_PULL);
+        intake.moveWristTo(Intake.WRIST_POSITION_MOVING);
+    }
+
+    public boolean monitorArmPositionSwitch() {
+        return arm.monitorPositionSwitch();
+    }
+
+    public void activateArm() {
+        if (arm.isActive()) {
+            return;
+        }
+        arm.activate();
+        intake.setWristActive(true);
+    }
+    public void deactivateArm() {
+        if (!arm.isActive()) {
+            return;
+        }
+        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
+        arm.setTargetRotation(Arm.ARM_ROTATION_INTAKE);
+        intake.moveWristTo(Intake.WRIST_POSITION_DEACTIVATED);
+        arm.deactivate();
+        intake.setWristActive(false);
     }
 
     public void startSystem() {
-        slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
-        arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
-        intake.holdWristRotation();
+        //slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
+        //arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
+        //intake.holdWristRotation();
+
+        arm.setTargetRotationAbsolute(20);
+        arm.updateMotorPowers();
+        try {
+            Thread.sleep(INITIAL_JUMP_TIME_MILLIS);
+        } catch (InterruptedException ignored) {}
+        deactivateArm();
     }
 
     public void updateMotorPowers() {
@@ -115,6 +232,8 @@ public class SampleControlSystem extends Module {
 
     @Override
     public void log() {
+        getTelemetry().addData("Target Distance Percent: ", targetDistancePercent);
+        getTelemetry().addData("Target Distance: ", targetDistance);
         slide.log();
         arm.log();
         intake.log();
