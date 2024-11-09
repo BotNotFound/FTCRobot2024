@@ -114,6 +114,7 @@ public class Intake extends Module {
     /**
      * Toggles the rotation of the wrist
      */
+    @Deprecated
     public void turn() {
         wristServo.runIfAvailable(w -> {
             if (w.getPosition() == 0.0) {
@@ -125,9 +126,7 @@ public class Intake extends Module {
     }
 
     public void rotateWristToDegrees(double rotation) {
-        wristServo.runIfAvailable(w -> {
-            w.setPosition(rotation / 180);
-        });
+        moveWristTo(rotation / 180);
     }
 
     /**

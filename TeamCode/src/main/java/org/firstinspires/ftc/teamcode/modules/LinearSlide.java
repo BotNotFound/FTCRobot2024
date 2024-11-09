@@ -31,7 +31,7 @@ public class LinearSlide extends Module {
      * The max distance the linear slide can extend in centimeters
      * Value was measured using measuring tape
      * The 7 is how far out the wrist extends from the end of the slide
-     * Real length is 93 centimeters
+     * Real length is 93 centimeters (without wrist distance)
      */
     public static final double MAX_EXTENSION_DISTANCE = 57 + 7 + SLIDE_BASE_LENGTH;
 

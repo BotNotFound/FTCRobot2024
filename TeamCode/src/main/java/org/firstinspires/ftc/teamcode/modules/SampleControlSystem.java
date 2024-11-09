@@ -89,7 +89,6 @@ public class SampleControlSystem extends Module {
     public void setToIntakeMode() {
         inIntakeMode = true;
         activateArm();
-        intake.setWristActive(false);
         slide.setTargetHeight(LinearSlide.SLIDE_HEIGHT_MOVING);
         arm.setTargetRotation(Arm.ARM_ROTATION_MOVING);
     }
@@ -133,11 +132,13 @@ public class SampleControlSystem extends Module {
         setSlideTarget(Math.max(targetDistance, MINIMUM_DISTANCE_LIMIT));
         // Set the arm's angle
         setArmAngle(Math.max(targetDistance, MINIMUM_DISTANCE_LIMIT));
+        // Set the wrist's rotation
+        setWristRotation(Math.max(targetDistance, MINIMUM_DISTANCE_LIMIT));
     }
 
     private void setSlideTarget(double distance) {
+        // Use Pythagorean's Theorem to find out how long the linear slide should extend
         double slideTarget = Math.sqrt((ARM_BASE_HEIGHT * ARM_BASE_HEIGHT) + (distance * distance));
-        getTelemetry().addData("Slide Target: ", ((slideTarget - LinearSlide.SLIDE_BASE_LENGTH) / LinearSlide.MAX_EXTENSION_DISTANCE));
         slide.setTargetHeight((slideTarget - LinearSlide.SLIDE_BASE_LENGTH) / LinearSlide.MAX_EXTENSION_DISTANCE);
     }
 
@@ -153,7 +154,7 @@ public class SampleControlSystem extends Module {
     }
 
     private void setWristRotation(double distance) {
-        double wristRotation = 180 - Math.toDegrees(Math.atan(distance / ARM_BASE_HEIGHT));
+        double wristRotation = 90 + Math.toDegrees(Math.atan(ARM_BASE_HEIGHT / distance));
         intake.rotateWristToDegrees(wristRotation);
     }
 
