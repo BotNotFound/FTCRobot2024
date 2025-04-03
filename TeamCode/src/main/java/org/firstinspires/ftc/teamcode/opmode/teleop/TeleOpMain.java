@@ -108,13 +108,7 @@ public class TeleOpMain extends OpMode {
             driveTrain.setVelocity(strafe, forward, rotate);
         }
 
-        if (gamepad2.left_bumper) {
-            fishingServo.raiseHook();
-        } else if (gamepad2.right_bumper) {
-            fishingServo.lowerHook();
-        } else {
-            fishingServo.stopHook();
-        }
+        // TODO bind the fishing servo interface to be used with the gamepad
 
         boolean activateArm = true;
         if (gamepad2.a) {
