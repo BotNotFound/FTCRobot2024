@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.modules;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.hardware.ConditionalHardwareDevice;
 import org.firstinspires.ftc.teamcode.modules.core.Module;
@@ -25,12 +26,20 @@ public class FishingServo extends Module {
          * The speed of the fishing servo when it is being raised or lowered
          */
         public static double SERVO_SPEED = 1.0;
+
+        /**
+         * The direction the servo will rotate to lower the fishhook
+         */
+        public static DcMotorSimple.Direction SERVO_LOWERING_DIRECTION = DcMotorSimple.Direction.FORWARD;
     }
 
     public FishingServo(OpMode registrar) {
         super(registrar);
 
         servo = ConditionalHardwareDevice.tryGetHardwareDevice(parent.hardwareMap, CRServo.class, SERVO_NAME);
+        servo.runIfAvailable(s -> {
+            s.setDirection(FishingConfig.SERVO_LOWERING_DIRECTION);
+        });
     }
 
     /**
@@ -38,7 +47,7 @@ public class FishingServo extends Module {
      */
     public void raiseHook() {
         servo.runIfAvailable(s -> {
-            s.setPower(FishingConfig.SERVO_SPEED);
+            s.setPower(-FishingConfig.SERVO_SPEED);
         });
     }
 
@@ -47,7 +56,7 @@ public class FishingServo extends Module {
      */
     public void lowerHook() {
         servo.runIfAvailable(s -> {
-            s.setPower(-FishingConfig.SERVO_SPEED);
+            s.setPower(FishingConfig.SERVO_SPEED);
         });
     }
 
