@@ -1,6 +1,6 @@
 # FTC Robot 2024
 
-This project contains the code used by the BotNotFound team for the 2024-2025 FTC competition
+This project contains the code used by the BotNotFound team for the 2024-2025 FTC competition, modified to serve as a fishing bot for a team event
 
 _For the original FTC readme, click [here](./README.FTC.md)_
 
