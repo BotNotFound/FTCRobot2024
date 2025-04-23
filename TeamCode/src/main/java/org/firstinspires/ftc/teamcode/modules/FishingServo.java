@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.modules;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 
@@ -17,6 +18,14 @@ public class FishingServo extends Module {
      */
     public static final String SERVO_NAME = "Fishing Servo";
 
+    @Config
+    public static class FishingConfig {
+        /**
+         * The speed of the fishing servo when it is being raised or lowered
+         */
+        private static double SERVO_SPEED = 1.0;
+    }
+
     public FishingServo(OpMode registrar) {
         super(registrar);
 
@@ -28,7 +37,7 @@ public class FishingServo extends Module {
      */
     public void raiseHook() {
         servo.runIfAvailable(s -> {
-            // TODO implement raiseHook
+            s.setPower(FishingConfig.SERVO_SPEED);
         });
     }
 
@@ -37,7 +46,7 @@ public class FishingServo extends Module {
      */
     public void lowerHook() {
         servo.runIfAvailable(s -> {
-            // TODO implement lowerHook
+            s.setPower(-FishingConfig.SERVO_SPEED);
         });
     }
 
@@ -46,7 +55,7 @@ public class FishingServo extends Module {
      */
     public void stopHook() {
         servo.runIfAvailable(s -> {
-            // TODO implement stopHook
+            s.setPower(0);
         });
     }
 
