@@ -24,7 +24,7 @@ public class FishingServo extends Module {
         /**
          * The speed of the fishing servo when it is being raised or lowered
          */
-        private static double SERVO_SPEED = 1.0;
+        public static double SERVO_SPEED = 1.0;
     }
 
     public FishingServo(OpMode registrar) {
