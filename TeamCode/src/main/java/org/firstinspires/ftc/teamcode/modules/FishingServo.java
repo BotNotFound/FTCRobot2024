@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 
 import org.firstinspires.ftc.teamcode.hardware.ConditionalHardwareDevice;
 import org.firstinspires.ftc.teamcode.modules.core.Module;
+import org.firstinspires.ftc.teamcode.util.StaticClass;
 
 public class FishingServo extends Module {
     /**
@@ -19,7 +20,7 @@ public class FishingServo extends Module {
     public static final String SERVO_NAME = "Fishing Servo";
 
     @Config
-    public static class FishingConfig {
+    public static class FishingConfig extends StaticClass {
         /**
          * The speed of the fishing servo when it is being raised or lowered
          */
